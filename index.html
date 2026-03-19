@@ -3,147 +3,138 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>アニメ風パチスロゲーム</title>
+<title>ラブコメ☆スロット</title>
 <style>
-body {
-  margin:0; background: radial-gradient(circle,#1a0033,#000); color:#fff; font-family:sans-serif; text-align:center;
+body{margin:0;background:#0d0221;color:#fff;font-family:sans-serif;text-align:center}
+h1{color:#ffb3ff;text-shadow:0 0 10px #ff00ff}
+
+#game{max-width:360px;margin:auto;padding:10px}
+
+#reels{display:flex;justify-content:center;margin:10px}
+.reel{width:80px;height:80px;background:#111;border:2px solid #fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:36px}
+
+button{margin:5px;padding:10px;border:none;border-radius:8px;cursor:pointer}
+#lever{background:#ff4081;color:#fff}
+.stop{background:#40c4ff}
+
+#anime{height:120px;margin:10px;border-radius:10px;background:#222;display:flex;align-items:center;justify-content:center;font-size:14px;padding:10px}
+
+#score{font-size:18px;margin:10px}
+
+.cutin{animation:cutin 0.5s}
+@keyframes cutin{
+0%{transform:translateX(-100%)}100%{transform:translateX(0)}
 }
 
-h1 { margin:10px; color:#ffccff; text-shadow:0 0 10px #ff00ff; }
-
-#machine {
-  margin:20px auto; padding:20px; width:320px;
-  background:linear-gradient(135deg,#330066,#6600cc);
-  border-radius:20px; box-shadow:0 0 20px #ff00ff;
+.win{animation:win 0.3s infinite}
+@keyframes win{
+0%{background:#222}50%{background:#ff1744}100%{background:#222}
 }
-
-#reels { display:flex; justify-content:center; margin:15px 0; }
-
-.reel {
-  width:80px; height:80px; margin:5px;
-  font-size:40px; display:flex; align-items:center; justify-content:center;
-  background:#111; border-radius:10px; border:2px solid #fff;
-}
-
-button {
-  margin:5px; padding:10px 15px; border:none; border-radius:10px;
-  font-size:14px; cursor:pointer;
-}
-
-#lever { background:#ff0066; color:#fff; font-size:18px; }
-.stop { background:#00ccff; }
-
-#result { margin-top:10px; font-size:18px; }
-
-.flash { animation:flash 0.2s infinite; }
-@keyframes flash {
-  0%{background:#111;} 50%{background:#ff0033;} 100%{background:#111;}
-}
-
-.bigwin { animation:bigwin 0.5s infinite; }
-@keyframes bigwin {
-  0%{box-shadow:0 0 10px gold;} 50%{box-shadow:0 0 40px yellow;} 100%{box-shadow:0 0 10px gold;}
-}
-
 </style>
 </head>
 <body>
 
-<h1>🎰 アニメ風パチスロ</h1>
+<h1>💖 ラブコメ☆スロット</h1>
 
-<div id="machine">
-  <div id="reels">
-    <div class="reel" id="r1">?</div>
-    <div class="reel" id="r2">?</div>
-    <div class="reel" id="r3">?</div>
-  </div>
+<div id="game">
 
-  <button id="lever">レバーON！</button><br>
-  <button class="stop" onclick="stopReel(0)">STOP1</button>
-  <button class="stop" onclick="stopReel(1)">STOP2</button>
-  <button class="stop" onclick="stopReel(2)">STOP3</button>
+<div id="anime">ここに演出が表示されるよ</div>
 
-  <div id="result"></div>
+<div id="reels">
+<div class="reel" id="r1">?</div>
+<div class="reel" id="r2">?</div>
+<div class="reel" id="r3">?</div>
+</div>
+
+<button id="lever">レバーON</button><br>
+<button class="stop" onclick="stopReel(0)">STOP1</button>
+<button class="stop" onclick="stopReel(1)">STOP2</button>
+<button class="stop" onclick="stopReel(2)">STOP3</button>
+
+<div id="score">スコア: 0</div>
+<div id="result"></div>
+
 </div>
 
 <script>
-const symbols=["🍒","🔔","⭐","7","🍉"];
+const symbols=["💖","😊","⭐","7","🍒"];
 let reels=["?","?","?"];
 let spinning=[false,false,false];
 let intervals=[null,null,null];
+let score=0;
+let kakuhen=false;
 
-// 簡易サウンド
-const ctx=new (window.AudioContext||window.webkitAudioContext)();
-function beep(freq){
-  const o=ctx.createOscillator(); const g=ctx.createGain();
-  o.connect(g); g.connect(ctx.destination);
-  o.frequency.value=freq; o.start();
-  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.2);
-  setTimeout(()=>o.stop(),200);
+const anime=document.getElementById("anime");
+
+function setAnime(text){
+ anime.classList.remove("cutin");
+ void anime.offsetWidth;
+ anime.classList.add("cutin");
+ anime.textContent=text;
 }
 
-// レバーON
 lever.onclick=()=>{
-  document.getElementById("result").textContent="回転開始！";
-
-  for(let i=0;i<3;i++){
-    spinning[i]=true;
-    intervals[i]=setInterval(()=>{
-      reels[i]=symbols[Math.floor(Math.random()*symbols.length)];
-      document.getElementById("r"+(i+1)).textContent=reels[i];
-    },80+ i*40);
-  }
-  beep(300);
+ setAnime("幼なじみ『ねぇ…今日こそ当ててよねっ！』");
+ for(let i=0;i<3;i++){
+   spinning[i]=true;
+   intervals[i]=setInterval(()=>{
+     reels[i]=symbols[Math.floor(Math.random()*symbols.length)];
+     document.getElementById("r"+(i+1)).textContent=reels[i];
+   },80+i*40);
+ }
 };
 
 function stopReel(i){
-  if(!spinning[i]) return;
-  clearInterval(intervals[i]);
-  spinning[i]=false;
-  beep(600+i*100);
-
-  if(spinning.every(v=>!v)){
-    checkResult();
-  }
+ if(!spinning[i])return;
+ clearInterval(intervals[i]);
+ spinning[i]=false;
+ if(spinning.every(v=>!v))check();
 }
 
-function checkResult(){
-  const [a,b,c]=reels;
-  const res=document.getElementById("result");
-  const machine=document.getElementById("machine");
+function check(){
+ const [a,b,c]=reels;
+ const res=document.getElementById("result");
 
-  machine.classList.remove("flash","bigwin");
+ if(kakuhen && Math.random()<0.5){
+   reels=["7","7","7"];
+ }
 
-  // 擬似確率（ちょい当たりやすめ）
-  if(Math.random()<0.15){
-    reels=["7","7","7"];
-    document.getElementById("r1").textContent="7";
-    document.getElementById("r2").textContent="7";
-    document.getElementById("r3").textContent="7";
-  }
+ if(a===b && b===c){
+   document.getElementById("game").classList.add("win");
 
-  if(a===b && b===c){
-    res.textContent="🎉 BIG BONUS!!!";
-    machine.classList.add("bigwin");
-    beep(1000);
+   if(a==="7"){
+     setAnime("ヒロイン『好き！…大好き！！』💖告白成功！");
+     score+=300;
+     kakuhen=true;
+     res.textContent="BIG BONUS（確変突入！）";
+   } else if(a==="💖"){
+     setAnime("ツンデレ『べ、別にあんたのためじゃないけど！』");
+     score+=150;
+     res.textContent="LOVE BONUS";
+   } else {
+     setAnime("後輩『先輩すごいです！』");
+     score+=100;
+     res.textContent="BONUS";
+   }
 
-  } else if(a===b || b===c || a===c){
-    res.textContent="✨ リーチ！チャンス！";
-    machine.classList.add("flash");
-    beep(800);
+ } else if(a===b || b===c || a===c){
+   setAnime("ドキドキ演出…✨距離が近い…！");
+   res.textContent="リーチ！";
 
-    // 擬似連演出
-    if(Math.random()<0.4){
-      setTimeout(()=>{
-        res.textContent="🔥 擬似連発生！";
-        lever.onclick();
-      },1000);
-    }
+   if(Math.random()<0.4){
+     setTimeout(()=>{
+       setAnime("✨カットイン！ヒロイン登場！");
+       lever.onclick();
+     },1000);
+   }
 
-  } else {
-    res.textContent="ハズレ…";
-    beep(200);
-  }
+ } else {
+   setAnime("モブ『あーあ、また外れか…』");
+   res.textContent="ハズレ";
+ }
+
+ document.getElementById("score").textContent="スコア: "+score;
+ setTimeout(()=>document.getElementById("game").classList.remove("win"),1500);
 }
 </script>
 
