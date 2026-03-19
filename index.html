@@ -1,1 +1,151 @@
-a
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アニメ風パチスロゲーム</title>
+<style>
+body {
+  margin:0; background: radial-gradient(circle,#1a0033,#000); color:#fff; font-family:sans-serif; text-align:center;
+}
+
+h1 { margin:10px; color:#ffccff; text-shadow:0 0 10px #ff00ff; }
+
+#machine {
+  margin:20px auto; padding:20px; width:320px;
+  background:linear-gradient(135deg,#330066,#6600cc);
+  border-radius:20px; box-shadow:0 0 20px #ff00ff;
+}
+
+#reels { display:flex; justify-content:center; margin:15px 0; }
+
+.reel {
+  width:80px; height:80px; margin:5px;
+  font-size:40px; display:flex; align-items:center; justify-content:center;
+  background:#111; border-radius:10px; border:2px solid #fff;
+}
+
+button {
+  margin:5px; padding:10px 15px; border:none; border-radius:10px;
+  font-size:14px; cursor:pointer;
+}
+
+#lever { background:#ff0066; color:#fff; font-size:18px; }
+.stop { background:#00ccff; }
+
+#result { margin-top:10px; font-size:18px; }
+
+.flash { animation:flash 0.2s infinite; }
+@keyframes flash {
+  0%{background:#111;} 50%{background:#ff0033;} 100%{background:#111;}
+}
+
+.bigwin { animation:bigwin 0.5s infinite; }
+@keyframes bigwin {
+  0%{box-shadow:0 0 10px gold;} 50%{box-shadow:0 0 40px yellow;} 100%{box-shadow:0 0 10px gold;}
+}
+
+</style>
+</head>
+<body>
+
+<h1>🎰 アニメ風パチスロ</h1>
+
+<div id="machine">
+  <div id="reels">
+    <div class="reel" id="r1">?</div>
+    <div class="reel" id="r2">?</div>
+    <div class="reel" id="r3">?</div>
+  </div>
+
+  <button id="lever">レバーON！</button><br>
+  <button class="stop" onclick="stopReel(0)">STOP1</button>
+  <button class="stop" onclick="stopReel(1)">STOP2</button>
+  <button class="stop" onclick="stopReel(2)">STOP3</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+const symbols=["🍒","🔔","⭐","7","🍉"];
+let reels=["?","?","?"];
+let spinning=[false,false,false];
+let intervals=[null,null,null];
+
+// 簡易サウンド
+const ctx=new (window.AudioContext||window.webkitAudioContext)();
+function beep(freq){
+  const o=ctx.createOscillator(); const g=ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.value=freq; o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.2);
+  setTimeout(()=>o.stop(),200);
+}
+
+// レバーON
+lever.onclick=()=>{
+  document.getElementById("result").textContent="回転開始！";
+
+  for(let i=0;i<3;i++){
+    spinning[i]=true;
+    intervals[i]=setInterval(()=>{
+      reels[i]=symbols[Math.floor(Math.random()*symbols.length)];
+      document.getElementById("r"+(i+1)).textContent=reels[i];
+    },80+ i*40);
+  }
+  beep(300);
+};
+
+function stopReel(i){
+  if(!spinning[i]) return;
+  clearInterval(intervals[i]);
+  spinning[i]=false;
+  beep(600+i*100);
+
+  if(spinning.every(v=>!v)){
+    checkResult();
+  }
+}
+
+function checkResult(){
+  const [a,b,c]=reels;
+  const res=document.getElementById("result");
+  const machine=document.getElementById("machine");
+
+  machine.classList.remove("flash","bigwin");
+
+  // 擬似確率（ちょい当たりやすめ）
+  if(Math.random()<0.15){
+    reels=["7","7","7"];
+    document.getElementById("r1").textContent="7";
+    document.getElementById("r2").textContent="7";
+    document.getElementById("r3").textContent="7";
+  }
+
+  if(a===b && b===c){
+    res.textContent="🎉 BIG BONUS!!!";
+    machine.classList.add("bigwin");
+    beep(1000);
+
+  } else if(a===b || b===c || a===c){
+    res.textContent="✨ リーチ！チャンス！";
+    machine.classList.add("flash");
+    beep(800);
+
+    // 擬似連演出
+    if(Math.random()<0.4){
+      setTimeout(()=>{
+        res.textContent="🔥 擬似連発生！";
+        lever.onclick();
+      },1000);
+    }
+
+  } else {
+    res.textContent="ハズレ…";
+    beep(200);
+  }
+}
+</script>
+
+</body>
+</html>
